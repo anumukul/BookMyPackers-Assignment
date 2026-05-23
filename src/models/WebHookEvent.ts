@@ -1,6 +1,5 @@
 import mongoose, { Schema, Document } from 'mongoose';
 
-// Idempotency store — prevents duplicate webhook processing
 export interface IWebhookEvent extends Document {
   idempotencyKey: string;
   action: string;

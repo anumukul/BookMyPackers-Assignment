@@ -1,12 +1,10 @@
 'use client';
 import { useState } from 'react';
 
-// Generate a unique key — no Node.js crypto needed client-side
 function generateKey() {
   return `wh-${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
 }
 
-// Fixed key for idempotency testing — always the same across calls
 const FIXED_IDEMPOTENCY_KEY = 'fixed-idempotency-key-prowider-001';
 
 interface LogEntry {
@@ -26,7 +24,6 @@ export default function TestToolsPage() {
     ]);
   };
 
-  // ── Seed DB ─────────────────────────────────────────────────────────────
   const seedDB = async () => {
     setLoading('seed');
     try {
@@ -43,9 +40,8 @@ export default function TestToolsPage() {
     }
   };
 
-  // ── Webhook: new key each time ───────────────────────────────────────────
+  // No loading state on webhook buttons so they can be clicked rapidly
   const triggerWebhookNew = async () => {
-    setLoading('webhook-new');
     const key = generateKey();
     try {
       const res = await fetch('/api/webhook', {
@@ -54,17 +50,16 @@ export default function TestToolsPage() {
         body: JSON.stringify({ idempotencyKey: key, action: 'reset-quota' }),
       });
       const data = await res.json();
-      addLog(`Webhook (new key: ${key}) → ${JSON.stringify(data)}`, res.ok ? 'success' : 'error');
+      addLog(
+        `Webhook (new key: ${key.slice(0, 24)}…) → ${JSON.stringify(data)}`,
+        res.ok ? 'success' : 'error'
+      );
     } catch {
       addLog('Webhook request failed', 'error');
-    } finally {
-      setLoading(null);
     }
   };
 
-  // ── Webhook: fixed key (idempotency test) ────────────────────────────────
   const triggerWebhookFixed = async () => {
-    setLoading('webhook-fixed');
     try {
       const res = await fetch('/api/webhook', {
         method: 'POST',
@@ -72,16 +67,16 @@ export default function TestToolsPage() {
         body: JSON.stringify({ idempotencyKey: FIXED_IDEMPOTENCY_KEY, action: 'reset-quota' }),
       });
       const data = await res.json();
-      const idempotent = data.idempotent ? ' [IDEMPOTENT — not re-processed]' : ' [processed]';
-      addLog(`Webhook (fixed key)${idempotent} → ${JSON.stringify(data)}`, res.ok ? 'success' : 'error');
+      const tag = data.idempotent ? ' [IDEMPOTENT — not re-processed]' : ' [processed]';
+      addLog(
+        `Webhook (fixed key)${tag} → ${JSON.stringify(data)}`,
+        res.ok ? 'success' : 'error'
+      );
     } catch {
       addLog('Webhook request failed', 'error');
-    } finally {
-      setLoading(null);
     }
   };
 
-  // ── Bulk lead generation ─────────────────────────────────────────────────
   const generateBulkLeads = async () => {
     setLoading('bulk');
     addLog('Generating 10 leads concurrently...', 'info');
@@ -139,13 +134,14 @@ export default function TestToolsPage() {
             Quotas can only reset through this webhook, not through the UI.
           </p>
           <div className="flex gap-2 flex-wrap">
-            <button onClick={triggerWebhookNew} disabled={!!loading}
+            {/* Webhook buttons have no disabled state so they can be spammed for testing */}
+            <button onClick={triggerWebhookNew}
               className={`${btnBase} bg-blue-600 text-white hover:bg-blue-700`}>
-              {loading === 'webhook-new' ? 'Sending...' : 'Send new webhook'}
+              Send new webhook
             </button>
-            <button onClick={triggerWebhookFixed} disabled={!!loading}
+            <button onClick={triggerWebhookFixed}
               className={`${btnBase} bg-blue-100 text-blue-800 hover:bg-blue-200`}>
-              {loading === 'webhook-fixed' ? 'Sending...' : 'Send same key (idempotency test)'}
+              Send same key (idempotency test)
             </button>
           </div>
           <p className="text-xs text-gray-400 mt-2">
@@ -160,7 +156,7 @@ export default function TestToolsPage() {
             Fires 10 simultaneous lead creations to stress-test allocation and concurrency handling.
             Watch the dashboard update in real time.
           </p>
-          <button onClick={generateBulkLeads} disabled={!!loading}
+          <button onClick={generateBulkLeads} disabled={loading === 'bulk'}
             className={`${btnBase} bg-orange-600 text-white hover:bg-orange-700`}>
             {loading === 'bulk' ? 'Generating...' : 'Generate 10 leads'}
           </button>
