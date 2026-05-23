@@ -1,7 +1,7 @@
 # Prowider — Mini Lead Distribution System
 
 ## Live Demo
-https://prowider-leads.vercel.app
+https://book-my-packers-assignment.vercel.app/
 
 ## Tech Stack
 - Next.js 14 (App Router)
@@ -18,8 +18,8 @@ https://prowider-leads.vercel.app
 ### Local Development
 
 ```bash
-git clone https://github.com/YOUR_USERNAME/prowider-leads
-cd prowider-leads
+git clone https://github.com/anumukul/BookMyPackers-Assignment
+cd BookMyPackers-Assignment
 npm install
 ```
 
